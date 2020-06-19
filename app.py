@@ -3,7 +3,15 @@
 Usage: flask run
 """
 
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -42,6 +50,7 @@ def new_restaurant():
     restaurant = Restaurant(name=request.form.get("name"))
     session.add(restaurant)
     session.commit()
+    flash("New Restaurant Created!")
 
     return redirect(url_for("show_restaurants"))
 
@@ -67,6 +76,7 @@ def edit_restaurant(restaurant_id):
 
     session.add(restaurant)
     session.commit()
+    flash("Restaurant Updated!")
 
     return redirect(url_for("show_restaurants"))
 
@@ -88,6 +98,7 @@ def delete_restaurant(restaurant_id):
 
     session.delete(restaurant)
     session.commit()
+    flash("Restaurant Deleted!")
 
     return redirect(url_for("show_restaurants"))
 
@@ -169,6 +180,7 @@ def new_menu_item(restaurant_id):
     )
     session.add(menu_item)
     session.commit()
+    flash("New Menu Item Created!")
 
     return redirect(url_for("show_menu_items", restaurant_id=restaurant_id))
 
@@ -199,6 +211,7 @@ def edit_menu_item(restaurant_id, menu_item_id):
 
     session.add(menu_item)
     session.commit()
+    flash("Menu Item Updated!")
 
     return redirect(url_for("show_menu_items", restaurant_id=restaurant_id))
 
@@ -225,6 +238,7 @@ def delete_menu_item(restaurant_id, menu_item_id):
 
     session.delete(menu_item)
     session.commit()
+    flash("Menu Item Deleted!")
 
     return redirect(url_for("show_menu_items", restaurant_id=restaurant_id))
 

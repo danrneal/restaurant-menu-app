@@ -3,59 +3,18 @@
 Usage: flask run
 """
 
-from flask import Flask, render_template
+from flask import Flask, redirect, render_template, request, url_for
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from models import Base, MenuItem, Restaurant
+
+engine = create_engine("sqlite:///restaurant_menu.db")
+Base.metadata.bind = engine
+DBSession = sessionmaker(bind=engine)
+session = DBSession()
 
 app = Flask(__name__)
-
-restaurant = {"name": "The CRUDdy Crab", "id": "1"}
-restaurants = [
-    {"name": "The CRUDdy Crab", "id": "1"},
-    {"name": "Blue Burgers", "id": "2"},
-    {"name": "Taco Hut", "id": "3"},
-]
-menu_items = [
-    {
-        "name": "Cheese Pizza",
-        "description": "made with fresh cheese",
-        "price": "$5.99",
-        "course": "Entree",
-        "id": "1",
-    },
-    {
-        "name": "Chocolate Cake",
-        "description": "made with Dutch Chocolate",
-        "price": "$3.99",
-        "course": "Dessert",
-        "id": "2",
-    },
-    {
-        "name": "Caesar Salad",
-        "description": "with fresh organic vegetables",
-        "price": "$5.99",
-        "course": "Entree",
-        "id": "3",
-    },
-    {
-        "name": "Iced Tea",
-        "description": "with lemon",
-        "price": "$.99",
-        "course": "Beverage",
-        "id": "4",
-    },
-    {
-        "name": "Spinach Dip",
-        "description": "creamy dip with fresh spinach",
-        "price": "$1.99",
-        "course": "Appetizer",
-        "id": "5",
-    },
-]
-menu_item = {
-    "name": "Cheese Pizza",
-    "description": "made with fresh cheese",
-    "price": "$5.99",
-    "course": "Entree",
-}
 
 
 @app.route("/")
@@ -66,20 +25,28 @@ def show_restaurants():
     Returns:
         An html template showing all restaurants
     """
+    restaurants = session.query(Restaurant).all()
     return render_template("restaurants.html", restaurants=restaurants)
 
 
-@app.route("/restaurants/new/")
+@app.route("/restaurants/new/", methods=["GET", "POST"])
 def new_restaurant():
     """Route handler for creating a new restaurant.
 
     Returns:
         An html template with a form to create a new restaurant
     """
-    return render_template("new_restaurant.html")
+    if request.method == "GET":
+        return render_template("new_restaurant.html")
+
+    restaurant = Restaurant(name=request.form.get("name"))
+    session.add(restaurant)
+    session.commit()
+
+    return redirect(url_for("show_restaurants"))
 
 
-@app.route("/restaurants/<int:restaurant_id>/edit/")
+@app.route("/restaurants/<int:restaurant_id>/edit/", methods=["GET", "POST"])
 def edit_restaurant(restaurant_id):
     """Route handler for modifying an existing restaurant.
 
@@ -89,10 +56,22 @@ def edit_restaurant(restaurant_id):
     Returns:
         An html template with a form to modify the given restaurant
     """
-    return render_template("edit_restaurant.html", restaurant=restaurant)
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+
+    if request.method == "GET":
+        return render_template("edit_restaurant.html", restaurant=restaurant)
+
+    for field in request.form:
+        if len(request.form.get(field)) > 0:
+            setattr(restaurant, field, request.form.get(field))
+
+    session.add(restaurant)
+    session.commit()
+
+    return redirect(url_for("show_restaurants"))
 
 
-@app.route("/restaurants/<int:restaurant_id>/delete/")
+@app.route("/restaurants/<int:restaurant_id>/delete/", methods=["GET", "POST"])
 def delete_restaurant(restaurant_id):
     """Route handler to delete and existing restaurant.
 
@@ -102,7 +81,15 @@ def delete_restaurant(restaurant_id):
     Returns:
         An html template with a confirmation to delete the given restaurant
     """
-    return render_template("delete_restaurant.html", restaurant=restaurant)
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+
+    if request.method == "GET":
+        return render_template("delete_restaurant.html", restaurant=restaurant)
+
+    session.delete(restaurant)
+    session.commit()
+
+    return redirect(url_for("show_restaurants"))
 
 
 @app.route("/restaurants/<int:restaurant_id>/")
@@ -117,30 +104,29 @@ def show_menu_items(restaurant_id):
     Return:
         An html template with the given restaurant's menu displayed
     """
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    menu_items = (
+        session.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
+    )
+
     appetizers = [
         menu_item
         for menu_item in menu_items
-        if menu_item["course"] == "Appetizer"
+        if menu_item.course == "Appetizer"
     ]
     entrees = [
-        menu_item
-        for menu_item in menu_items
-        if menu_item["course"] == "Entree"
+        menu_item for menu_item in menu_items if menu_item.course == "Entree"
     ]
     desserts = [
-        menu_item
-        for menu_item in menu_items
-        if menu_item["course"] == "Dessert"
+        menu_item for menu_item in menu_items if menu_item.course == "Dessert"
     ]
     beverages = [
-        menu_item
-        for menu_item in menu_items
-        if menu_item["course"] == "Beverage"
+        menu_item for menu_item in menu_items if menu_item.course == "Beverage"
     ]
     uncategorized = [
         menu_item
         for menu_item in menu_items
-        if menu_item["course"]
+        if menu_item.course
         not in ("Appetizer", "Entree", "Dessert", "Beverage")
     ]
 
@@ -156,7 +142,9 @@ def show_menu_items(restaurant_id):
     )
 
 
-@app.route("/restaurants/<int:restaurant_id>/menu/new/")
+@app.route(
+    "/restaurants/<int:restaurant_id>/menu/new/", methods=["GET", "POST"]
+)
 def new_menu_item(restaurant_id):
     """Route handler for creating a new menu item for the given restaurant.
 
@@ -167,10 +155,28 @@ def new_menu_item(restaurant_id):
     Returns:
         An html template with a form to create a new menu item
     """
-    return render_template("new_menu_item.html", restaurant_id=restaurant_id)
+    if request.method == "GET":
+        return render_template(
+            "new_menu_item.html", restaurant_id=restaurant_id
+        )
+
+    menu_item = MenuItem(
+        name=request.form.get("name"),
+        course=request.form.get("course"),
+        description=request.form.get("description"),
+        price=request.form.get("price"),
+        restaurant_id=restaurant_id,
+    )
+    session.add(menu_item)
+    session.commit()
+
+    return redirect(url_for("show_menu_items", restaurant_id=restaurant_id))
 
 
-@app.route("/restaurants/<int:restaurant_id>/menu/<int:menu_id>/edit/",)
+@app.route(
+    "/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>/edit/",
+    methods=["GET", "POST"],
+)
 def edit_menu_item(restaurant_id, menu_item_id):
     """Route handler for modifying an existing menu item.
 
@@ -182,10 +188,25 @@ def edit_menu_item(restaurant_id, menu_item_id):
     Returns:
         An html template with a form to modify the given menu item
     """
-    return render_template("edit_menu_item.html", menu_item=menu_item)
+    menu_item = session.query(MenuItem).filter_by(id=menu_item_id).one()
+
+    if request.method == "GET":
+        return render_template("edit_menu_item.html", menu_item=menu_item)
+
+    for field in request.form:
+        if len(request.form.get(field)) > 0:
+            setattr(menu_item, field, request.form.get(field))
+
+    session.add(menu_item)
+    session.commit()
+
+    return redirect(url_for("show_menu_items", restaurant_id=restaurant_id))
 
 
-@app.route("/restaurants/<int:restaurant_id>/menu/<int:menu_id>/delete/",)
+@app.route(
+    "/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>/delete/",
+    methods=["GET", "POST"],
+)
 def delete_menu_item(restaurant_id, menu_item_id):
     """Route handler for deleting an existing menu item.
 
@@ -197,7 +218,15 @@ def delete_menu_item(restaurant_id, menu_item_id):
     Returns:
         An html template with a confirmation to delete the given menu item
     """
-    return render_template("delete_menu_item.html", menu_item=menu_item)
+    menu_item = session.query(MenuItem).filter_by(id=menu_item_id).one()
+
+    if request.method == "GET":
+        return render_template("delete_menu_item.html", menu_item=menu_item)
+
+    session.delete(menu_item)
+    session.commit()
+
+    return redirect(url_for("show_menu_items", restaurant_id=restaurant_id))
 
 
 if __name__ == "__main__":

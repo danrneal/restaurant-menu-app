@@ -3,7 +3,7 @@
 Usage: flask run
 """
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -101,7 +101,7 @@ def show_menu_items(restaurant_id):
         restaurant_id: An int representing the id of the restaurant whose menu
             is to be displayed
 
-    Return:
+    Returns:
         An html template with the given restaurant's menu displayed
     """
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
@@ -181,9 +181,9 @@ def edit_menu_item(restaurant_id, menu_item_id):
     """Route handler for modifying an existing menu item.
 
     Args:
-        restaurant_id: An int representing the restaurant the given menu item
-            belongs to
-        menu_item_id: An int representing the menu item to modify
+        restaurant_id: An int representing the id of the restaurant the given
+            menu item belongs to
+        menu_item_id: An int representing the id of the menu item to modify
 
     Returns:
         An html template with a form to modify the given menu item
@@ -211,9 +211,9 @@ def delete_menu_item(restaurant_id, menu_item_id):
     """Route handler for deleting an existing menu item.
 
     Args:
-        restaurant_id: An int representing the restaurant the given menu item
-            belongs to
-        menu_item_id: An int representing the menu item to delete
+        restaurant_id: An int representing the id of the restaurant the given
+            menu item belongs to
+        menu_item_id: An int representing the id of the menu item to delete
 
     Returns:
         An html template with a confirmation to delete the given menu item
@@ -227,6 +227,63 @@ def delete_menu_item(restaurant_id, menu_item_id):
     session.commit()
 
     return redirect(url_for("show_menu_items", restaurant_id=restaurant_id))
+
+
+@app.route("/api/restaurants/")
+def restaurants_api():
+    """Route handler for api endpoint retreiving all restaurants.
+
+    Returns:
+        response: A json object containing all restaurants
+    """
+    restaurants = session.query(Restaurant).all()
+    response = jsonify(
+        restaurants=[restaurant.serialize for restaurant in restaurants]
+    )
+
+    return response
+
+
+@app.route("/api/restaurants/<int:restaurant_id>/")
+@app.route("/api/restaurants/<int:restaurant_id>/menu/")
+def menu_items_api(restaurant_id):
+    """Route handler for api endpoint retreiving menu items for a restaurant.
+
+    Args:
+        restaurant_id: An int representing the id of the restaurant whose menu
+            items are to be retrieved
+
+    Returns:
+        response: A json object containing all menu items for a given
+            restaurant
+    """
+    menu_items = (
+        session.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
+    )
+    response = jsonify(
+        menu_items=[menu_item.serialize for menu_item in menu_items]
+    )
+
+    return response
+
+
+@app.route("/api/restaurants/<int:restaurant_id>/menu/<int:menu_id>/")
+def menu_item_api(restaurant_id, menu_id):  # pylint: disable=unused-argument
+    """Route handler for api endpoint retreiving a specific menu item.
+
+    Args:
+        restaurant_id: An int representing the id of the restaurant the given
+            menu item to be retrieved belongs to (unused)
+        menu_item_id: An int representing the id of the menu item to be
+            retrieved
+
+    Returns:
+        response: A json object containing the given menu item
+    """
+    menu_item = session.query(MenuItem).filter_by(id=menu_id).one()
+    response = jsonify(menu_item=menu_item.serialize)
+
+    return response
 
 
 if __name__ == "__main__":

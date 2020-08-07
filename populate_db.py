@@ -1,4 +1,4 @@
-# pylint: disable=no-member
+# flake8: noqa
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

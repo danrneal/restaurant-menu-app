@@ -1,24 +1,24 @@
 <html>
 
 <head>
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
-    <div class="pane">
-        <div class="header">
-            <h1>New Restaurant</h1>
-        </div>
-
-        <div class="container">
-            <form action="{{ url_for('new_restaurant') }}" method="POST">
-                <p>Name:</p>
-                <input type="text" size="30" name="name">
-                <input type="submit" value="Create">
-                <a href="{{ url_for('show_restaurants') }}">Cancel</a>
-            </form>
-        </div>
+  <div class="pane">
+    <div class="header">
+      <h1>New Restaurant</h1>
     </div>
+
+    <div class="container">
+      <form action="{{ url_for('new_restaurant') }}" method="POST">
+        <p>Name:</p>
+        <input type="text" size="30" name="name">
+        <input type="submit" value="Create">
+        <a href="{{ url_for('show_restaurants') }}">Cancel</a>
+      </form>
+    </div>
+  </div>
 </body>
 
 </html>

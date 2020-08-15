@@ -1,40 +1,40 @@
 <html>
 
 <head>
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
-    <div class="pane">
-        <div class="header">
-            <h1>Restaurants</h1>
-        </div>
-
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="flash">
-            {% for message in messages %}
-            <strong>{{ message }}</strong>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
-
-        <a href="{{ url_for('new_restaurant') }}">Create New Restaurant</a>
-
-        {% if restaurants %}
-        {% for restaurant in restaurants %}
-        <div>
-            <h3>{{ restaurant.name }}</h3>
-            <a href="{{ url_for('show_menu_items', restaurant_id=restaurant.id) }}">Menu</a>
-            <a href="{{ url_for('edit_restaurant', restaurant_id=restaurant.id) }}">Edit</a>
-            <a href="{{ url_for('delete_restaurant', restaurant_id=restaurant.id) }}">Delete</a>
-        </div>
-        {% endfor %}
-        {% else %}
-        <p>There are currently no restaurants to display</p>
-        {% endif %}
+  <div class="pane">
+    <div class="header">
+      <h1>Restaurants</h1>
     </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash">
+      {% for message in messages %}
+      <strong>{{ message }}</strong>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <a href="{{ url_for('new_restaurant') }}">Create New Restaurant</a>
+
+    {% if restaurants %}
+    {% for restaurant in restaurants %}
+    <div>
+      <h3>{{ restaurant.name }}</h3>
+      <a href="{{ url_for('show_menu_items', restaurant_id=restaurant.id) }}">Menu</a>
+      <a href="{{ url_for('edit_restaurant', restaurant_id=restaurant.id) }}">Edit</a>
+      <a href="{{ url_for('delete_restaurant', restaurant_id=restaurant.id) }}">Delete</a>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>There are currently no restaurants to display</p>
+    {% endif %}
+  </div>
 </body>
 
 </html>

@@ -1,7 +1,7 @@
 body {
   font-family: sans-serif;
   background-color: #333333;
-  background-image: url("https://cloud.githubusercontent.com/assets/9041401/6119508/7cbced14-b07e-11e4-9dbd-f01488203879.jpg");
+  background-image: url('https://cloud.githubusercontent.com/assets/9041401/6119508/7cbced14-b07e-11e4-9dbd-f01488203879.jpg');
 }
 
 h1,
@@ -13,7 +13,7 @@ h4 {
 
 h1,
 h2 {
-  font-family: "Georgia", serif;
+  font-family: 'Georgia', serif;
 }
 
 h1 {
@@ -44,11 +44,11 @@ a {
   font-size: 0.75em;
 }
 
-input[type="text"] {
+input[type='text'] {
   margin-top: 5px;
 }
 
-input[type="submit"] {
+input[type='submit'] {
   margin-top: 25px;
 }
 
